@@ -22,14 +22,25 @@ interface IWETH {
  */
 contract Drops is Ownable {
   //======== State ========
+
+  IWETH public weth;
+
+  // Merkle roots for each drop
   bytes32[] public dropRoots;
+
+  // Last block where payments were included for a block
+  uint256[] public dropBlocks;
+
+  // Total eth included in drops yet to be claimed
   uint256 public unclaimedEth;
+
   mapping(bytes32 => bool) internal claimed;
-  IWETH weth;
+
 
   //======== Events ========
+  
   event Payment(string split, address from, uint256 amount);
-  event Drop(bytes32 dropRoot, uint256 dropTotal);
+  event Drop(bytes32 dropRoot, uint256 dropBlock, uint256 dropTotal);
   event Claim(
     uint256 dropNumber, 
     address recipient, 
@@ -37,25 +48,35 @@ contract Drops is Ownable {
     bool wrapped
   );
 
+
   //======== Constructor ========
+
   constructor(address wethAddress) {
     weth = IWETH(wethAddress);
   }
 
+
   //======== External Functions ========
+
   function pay(string calldata split, address from) external payable {
     require(msg.value > 0, "Value was 0");
     emit Payment(split, from, msg.value);
   }
 
-  function drop(bytes32 dropRoot, uint256 dropAmount) external onlyOwner {
+  function drop(
+    bytes32 dropRoot, 
+    uint256 dropBlock, 
+    uint256 dropAmount
+  ) external onlyOwner {
+    require(dropBlock <= block.number, "Drop block passed");
     require(
       address(this).balance - dropAmount >= unclaimedEth,
       "Drop too large"
     );
     dropRoots.push(dropRoot);
+    dropBlocks.push(dropBlock);
     unclaimedEth += dropAmount;
-    emit Drop(dropRoot, dropAmount);
+    emit Drop(dropRoot, dropBlock, dropAmount);
   }
 
   function multiClaim(
@@ -80,7 +101,9 @@ contract Drops is Ownable {
     }
   }
   
+
   //======== Public Functions ========
+
   function claim(
     uint256 dropNumber,
     address recipient, 
@@ -109,8 +132,10 @@ contract Drops is Ownable {
     return claimed[getClaimHash(dropNumber, recipient)];
   }
 
+
   //======== Private Functions ========
-  // Will attempt to transfer ETH, but will transfer WETH instead if it fails.
+  
+  // Will attempt to transfer ETH but will transfer WETH instead if it fails.
   function transferETHOrWETH(
     address to, 
     uint256 value

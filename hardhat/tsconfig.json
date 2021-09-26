@@ -4,6 +4,7 @@
     "module": "commonjs",
     "strict": true,
     "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,
     "esModuleInterop": true,
     "outDir": "dist"
   },
