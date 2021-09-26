@@ -139,9 +139,9 @@ contract Drops is Ownable {
   function transferETHOrWETH(
     address to, 
     uint256 value
-  ) private returns (bool didSucceed) {
+  ) private returns (bool) {
     // Try to transfer ETH to the given recipient.
-    didSucceed = attemptETHTransfer(to, value);
+    bool didSucceed = attemptETHTransfer(to, value);
     if (!didSucceed) {
       // If the transfer fails, wrap and send as WETH, so that
       // the auction is not impeded and the recipient still
