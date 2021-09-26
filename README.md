@@ -20,8 +20,8 @@ The process for using the contract is as follows:
 6. Repeat.
 
 ## Example use case: selling an NFT and rev sharing w/ Drops
-An auction house style contract:
-- new auction sends NFT to contract and starts auction, includes split ID
-- people bid
-- winning bid is found, but payment is sent to Drops using `pay` and the split ID instead of directly to NFT owner
-- splitees wait for the next drop and withdraw funds then
+An auction house style contract where:
+- New auction sends NFT to contract and starts auction, includes split string
+- People bid
+- Winning bid is found, payment is sent to Drops (instead of to NFT owner or other current variations) using `pay` and including the split string
+- Splitees wait for the next drop to be added and withdraw funds then, along with any other funds they have been shared during the period.
