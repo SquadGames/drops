@@ -1,7 +1,7 @@
 # Drops
-A protocol that lets any number of revenue splits be pooled, and when funds are made available, recipients can claim funds from all revenue shared with them in one cheap transaction.
+A protocol that lets any number of revenue splits be pooled into periodic "merkle drops." When a new drop is created, recipients can claim funds from all revenue shared with them during the previous period in one cheap transaction.
 
-Particularly useful when many people expect to receive revenue shares from many different sources.
+Particularly useful when many people expect to receive revenue shares from many different sources over extended periods of time (i.e. a world where rev shares are an important part of people's income).
 
 ## Approach
 The Drops contract resembles [Mirror's Splitter](https://github.com/mirror-xyz/splits/blob/main/contracts/Splitter.sol) contract, with a few modifications:
