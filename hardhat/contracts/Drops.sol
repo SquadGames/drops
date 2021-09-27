@@ -28,7 +28,7 @@ contract Drops is Ownable {
   // Merkle roots for each drop
   bytes32[] public dropRoots;
 
-  // Last block where payments were included for a block
+  // Last block where payments were included for each drop
   uint256[] public dropBlocks;
 
   // Total eth included in drops yet to be claimed
@@ -40,7 +40,14 @@ contract Drops is Ownable {
   //======== Events ========
   
   event Payment(string split, address from, uint256 amount);
-  event Drop(bytes32 dropRoot, uint256 dropBlock, uint256 dropTotal);
+
+  event Drop(
+    bytes32 dropRoot, 
+    uint256 dropBlock, 
+    uint256 dropTotal,
+    uint256 dropCount
+  );
+
   event Claim(
     uint256 dropNumber, 
     address recipient, 
@@ -68,15 +75,15 @@ contract Drops is Ownable {
     uint256 dropBlock, 
     uint256 dropAmount
   ) external onlyOwner {
-    require(dropBlock <= block.number, "Drop block passed");
+    require(dropBlock < block.number, "Drop block passed");
     require(
-      address(this).balance - dropAmount >= unclaimedEth,
+      dropAmount + unclaimedEth <= address(this).balance,
       "Drop too large"
     );
     dropRoots.push(dropRoot);
     dropBlocks.push(dropBlock);
     unclaimedEth += dropAmount;
-    emit Drop(dropRoot, dropBlock, dropAmount);
+    emit Drop(dropRoot, dropBlock, dropAmount, dropRoots.length);
   }
 
   function multiClaim(
@@ -99,6 +106,10 @@ contract Drops is Ownable {
         proofs[i]
       );
     }
+  }
+
+  function dropCount() external view returns(uint256) {
+    return dropRoots.length;
   }
   
 
@@ -159,7 +170,8 @@ contract Drops is Ownable {
   ) private returns (bool) {
     // Here increase the gas limit a reasonable amount above the default, and try
     // to send ETH to the recipient.
-    // NOTE: This might allow the recipient to attempt a limited reentrancy attack.
+    // NOTE: This might allow the recipient to attempt a limited reentrancy attack, 
+    // but this should be guarded against by setting claimed first.
     (bool success, ) = to.call{value: value, gas: 30000}("");
     return success;
   }
