@@ -121,7 +121,7 @@ contract Drops is Ownable {
     uint256 amount,  
     bytes32[] calldata proof
   ) public {
-    require(dropRoots.length >= dropNumber, "Drop doesn't exist");
+    require(dropRoots.length > dropNumber, "Drop doesn't exist");
     require(!isClaimed(dropNumber, recipient), "Already claimed");
     claimed[getClaimHash(dropNumber, recipient)] = true;
     require(
@@ -133,6 +133,7 @@ contract Drops is Ownable {
       "Invalid proof"
     );
     bool wrapped = transferETHOrWETH(recipient, amount);
+    unclaimedEth -= amount;
     emit Claim(dropNumber, recipient, amount, wrapped);
   }
 
