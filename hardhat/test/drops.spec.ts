@@ -7,8 +7,8 @@ import { Drops } from '../typechain/Drops'
 import { Drops__factory } from '../typechain/factories/Drops__factory'
 import config from '../config'
 import {
-  scenarioToDropData,
-  Scenario,
+  fullDropData,
+  TestDrop,
   checkedPay,
   checkedDrop,
   checkedClaim,
@@ -18,7 +18,7 @@ import {
   getProofs
 } from './utils'
 
-const scenarios: Scenario[] = [
+const scenario: TestDrop[] = [
   {
     payments: [BigNumber.from(10e10)],
     amounts: [
@@ -34,7 +34,8 @@ const scenarios: Scenario[] = [
       BigNumber.from(1e10), 
       BigNumber.from(2e10), 
       BigNumber.from(3e10), 
-      BigNumber.from(3e10)
+      BigNumber.from(2e10),
+      BigNumber.from(1e10)
     ]
   }
 ]
@@ -85,9 +86,9 @@ describe('Drops', () => {
     let block: providers.Block
 
     beforeEach(async () => {
-      const scenario = scenarios[0]
-      if (!scenario) { throw new Error("no scenario 0") }
-      const dropData = await scenarioToDropData(scenario, signers)
+      const testDrop = scenario[0]
+      if (!testDrop) { throw new Error("no testDrop 0") }
+      const dropData = await fullDropData(testDrop, signers)
       tree = dropData.tree
       const payments = dropData.payments
       paymentSum = dropData.paymentSum
@@ -145,9 +146,9 @@ describe('Drops', () => {
     let paymentSum: BigNumber
 
     beforeEach(async () => {
-      const scenario = scenarios[0]
-      if (!scenario) { throw new Error("no scenario 0") }
-      const dropData = await scenarioToDropData(scenario, signers)
+      const testDrop = scenario[0]
+      if (!testDrop) { throw new Error("no testDrop 0") }
+      const dropData = await fullDropData(testDrop, signers)
       tree = dropData.tree
       balances = dropData.balances
       const payments = dropData.payments
@@ -284,10 +285,10 @@ describe('Drops', () => {
       balancesArray = []
       paymentSums = []
 
-      for(let i = 0; i < scenarios.length; i++) {
-        const scenario = scenarios[i]
-        if (!scenario) { throw new Error("no scenario 0") }
-        const dropData = await scenarioToDropData(scenario, signers)
+      for(let i = 0; i < scenario.length; i++) {
+        const testDrop = scenario[i]
+        if (!testDrop) { throw new Error("no testDrop 0") }
+        const dropData = await fullDropData(testDrop, signers)
         trees.push(dropData.tree)
         balancesArray.push(dropData.balances)
         const payments = dropData.payments
@@ -360,7 +361,7 @@ describe('Drops', () => {
         .to.be.revertedWith("Invalid proof")
     })
 
-    it('reverts with incorrect recipients', async () => {
+    it('reverts with wrong recipients', async () => {
       const balanceIndices = [0, 1]
       const dropNumbers = [0, 1] 
       const { recipients, amounts, balances } = 
@@ -385,7 +386,7 @@ describe('Drops', () => {
         .to.be.revertedWith("Invalid proof")
     })
 
-    it('reverts with incorrect amounts', async () => {
+    it('reverts with wrong amounts', async () => {
       const balanceIndices = [0, 1]
       const dropNumbers = [0, 1] 
       const { recipients, amounts, balances } = 
@@ -410,7 +411,7 @@ describe('Drops', () => {
         .to.be.revertedWith("Invalid proof")
     })
 
-    it('reverts with incorrect proofs', async () => {
+    it('reverts with wrong proofs', async () => {
       const balanceIndices = [0, 1]
       const dropNumbers = [0, 1] 
       const { recipients, amounts, balances } = 

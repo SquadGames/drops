@@ -4,7 +4,7 @@ import { makeMerkleTree, MerkleTree, getHexRoot, getHexProof, toHexLeaf, toLeaf,
 
 import { Drops } from '../typechain/Drops'
 
-export interface Scenario {
+export interface TestDrop {
   payments: BigNumber[],
   amounts: BigNumber[]
 }
@@ -16,26 +16,26 @@ export interface DropData {
   paymentSum: BigNumber
 }
 
-export async function scenarioToDropData(scenario: Scenario, signers: Signer[]): Promise<DropData> {
+export async function fullDropData(testDrop: TestDrop, signers: Signer[]): Promise<DropData> {
   // check amounts total lte payments total
-  const amountSum = scenario.amounts.reduce(
+  const amountSum = testDrop.amounts.reduce(
     (total, a) => total = total.add(a), 
     BigNumber.from(0)
   )
-  const paymentSum = scenario.payments.reduce(
+  const paymentSum = testDrop.payments.reduce(
     (total, p) => total = total.add(p), 
     BigNumber.from(0)
   )
-  expect(amountSum).to.be.lte(paymentSum, "scenario sums")
+  expect(amountSum).to.be.lte(paymentSum, "testDrop sums")
 
   const balances: Balance[] = []
   const leaves: Buffer[] = []
-  for(let i = 0; i < scenario.amounts.length; i++) {
+  for(let i = 0; i < testDrop.amounts.length; i++) {
     const signer = signers[i]
     if (signer) {
       const balance: Balance = {
         recipient: await signer.getAddress(),
-        amount: BigNumber.from(scenario.amounts[i])
+        amount: BigNumber.from(testDrop.amounts[i])
       }
       balances.push(balance)
       leaves.push(toLeaf(balance))
@@ -45,7 +45,7 @@ export async function scenarioToDropData(scenario: Scenario, signers: Signer[]):
   return {
     balances,
     tree: makeMerkleTree(leaves),
-    payments: scenario.payments,
+    payments: testDrop.payments,
     paymentSum
   }
 }
