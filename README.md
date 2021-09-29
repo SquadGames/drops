@@ -25,3 +25,16 @@ An auction house style contract where:
 - People bid
 - Winning bid is found, payment is sent to Drops (instead of to NFT owner or other current variations) using `pay` and including the split string
 - Splitees wait for the next drop to be added and withdraw funds then, along with any other funds they have been shared during the period.
+
+## Future improvements
+A simple idea for setting up an owner-DAO:
+- Create a governance token that can be minted by the Drops contract
+- Anytime someone `claim`s from a drop, mint them the same number of the governance token
+- Put those token holders in control of a DAO that is the owner of the Drops contract -- that DAO has a strong incentive to run the system correctly/fairly
+
+Longer term, there is an improved version of the system that allows on-demand withdrawals:
+- Contract accepts payments
+- Contract emits events with split information for each payment (or off-chain signed messages from the payers)
+- Off-chain system reads this payment/split information and maintains a constant withdrawal balance for everyone
+- Anyone with a positive balance can request the off-chain system to give them a withdrawal
+- If they do, the system sends that person a signed message they can submit to the contract to withdraw their pay and subtracts the amount from their balance in the off-chain system
