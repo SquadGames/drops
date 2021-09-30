@@ -147,7 +147,6 @@ contract Drops is Ownable {
 
   //======== Private Functions ========
   
-  // Will attempt to transfer ETH but will transfer WETH instead if it fails.
   function transferETHOrWETH(
     address to, 
     uint256 value
@@ -155,12 +154,9 @@ contract Drops is Ownable {
     // Try to transfer ETH to the given recipient.
     bool didSucceed = attemptETHTransfer(to, value);
     if (!didSucceed) {
-      // If the transfer fails, wrap and send as WETH, so that
-      // the auction is not impeded and the recipient still
-      // can claim ETH via the WETH contract (similar to escrow).
+      // If the transfer fails, wrap and send as WETH.
       weth.deposit{value: value}();
       weth.transfer(to, value);
-      // At this point, the recipient can unwrap WETH.
     }
     return !didSucceed;
   }
