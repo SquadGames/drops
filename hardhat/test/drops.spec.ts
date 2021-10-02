@@ -5,6 +5,10 @@ import { getHexRoot, getHexProof, toHexLeaf, MerkleTree, Balance } from "@drops/
 
 import { Drops } from '../typechain/Drops'
 import { Drops__factory } from '../typechain/factories/Drops__factory'
+import { RefuseEth } from '../typechain/RefuseEth'
+import { RefuseEth__factory } from '../typechain/factories/RefuseEth__factory'
+import { TooMuchGas } from '../typechain/TooMuchGas'
+import { TooMuchGas__factory } from '../typechain/factories/TooMuchGas__factory'
 import config from '../config'
 import {
   fullDropData,
@@ -45,6 +49,8 @@ describe('Drops', () => {
   let signers: Signer[]
   let signer0: Signer
   let dropsSigner0: Drops
+  let refuseEth: RefuseEth
+  let tooMuchGas: TooMuchGas
 
   beforeEach(async () => {
     provider = waffle.provider
@@ -53,6 +59,10 @@ describe('Drops', () => {
     signer0 = signers[0]
     const DropsFactory = new Drops__factory(signer0)
     dropsSigner0 = await DropsFactory.deploy(config.hardhat.WETH_ADDRESS)
+    const RefuseEthFactory = new RefuseEth__factory(signer0)
+    refuseEth = await RefuseEthFactory.deploy()
+    const TooMuchGasFactory = new TooMuchGas__factory(signer0)
+    tooMuchGas = await TooMuchGasFactory.deploy()
   })
 
   describe('pay', () => {
@@ -190,7 +200,119 @@ describe('Drops', () => {
       )
     })
 
-    it.skip('updates claimed, transfers WETH if ETH fails, and emits Claim', async () => {})
+    it('updates claimed, transfers WETH if contract refuses ETH, and emits Claim', async () => {
+      const testDrop = scenario[0]
+      if (!testDrop) { throw new Error("no testDrop 0") }
+      const refuseEthSigners = testDrop.amounts.map(() => {
+        return refuseEth.address
+      })
+      const dropData = await fullDropData(testDrop, refuseEthSigners)
+      tree = dropData.tree
+      balances = dropData.balances
+      const payments = dropData.payments
+      paymentSum = dropData.paymentSum
+
+      const split = "split"
+
+      for(let i = 0; i < payments.length; i++) {
+        const payment = payments[i]
+        if (payment) {
+          await checkedPay(
+            provider,
+            dropsSigner0,
+            split,
+            await signer0.getAddress(),
+            payment
+          )
+        }
+      }
+
+      const block: providers.Block = await provider.getBlock("latest")
+      
+      await checkedDrop(
+        dropsSigner0,
+        tree,
+        block,
+        paymentSum
+      )
+      const balanceIndex=  0
+      const dropNumber = 1
+      const balance = balances[balanceIndex]
+      if (!balance) { throw new Error("no balance") }
+      const claimed1 = await dropsSigner0.isClaimed(
+        dropNumber,
+        balance.recipient
+      )
+      expect(claimed1).to.be.false
+
+      const proof = getHexProof(tree, toHexLeaf(balance))
+
+      await expect(dropsSigner0.claim(
+        dropNumber,
+        balance.recipient,
+        balance.amount,
+        proof
+      ))
+        .to.be.revertedWith("function call to a non-contract account")
+        // the revert we expect when calling a fake WETH address
+    })
+
+    it('updates claimed, transfers WETH if gas cost is too high, and emits Claim', async () => {
+      const testDrop = scenario[0]
+      if (!testDrop) { throw new Error("no testDrop 0") }
+      const tooMuchGasSigners = testDrop.amounts.map(() => {
+        return tooMuchGas.address
+      })
+      const dropData = await fullDropData(testDrop, tooMuchGasSigners)
+      tree = dropData.tree
+      balances = dropData.balances
+      const payments = dropData.payments
+      paymentSum = dropData.paymentSum
+
+      const split = "split"
+
+      for(let i = 0; i < payments.length; i++) {
+        const payment = payments[i]
+        if (payment) {
+          await checkedPay(
+            provider,
+            dropsSigner0,
+            split,
+            await signer0.getAddress(),
+            payment
+          )
+        }
+      }
+
+      const block: providers.Block = await provider.getBlock("latest")
+      
+      await checkedDrop(
+        dropsSigner0,
+        tree,
+        block,
+        paymentSum
+      )
+      const balanceIndex=  0
+      const dropNumber = 1
+      const balance = balances[balanceIndex]
+      if (!balance) { throw new Error("no balance") }
+      const claimed1 = await dropsSigner0.isClaimed(
+        dropNumber,
+        balance.recipient
+      )
+      expect(claimed1).to.be.false
+
+      const proof = getHexProof(tree, toHexLeaf(balance))
+
+      await expect(dropsSigner0.claim(
+        dropNumber,
+        balance.recipient,
+        balance.amount,
+        proof
+      ))
+        .to.be.revertedWith("function call to a non-contract account")
+        // the revert we expect when calling a fake WETH address
+    })
 
     it('reverts if drop does not exist', async () => {
       const dropNumber = 1

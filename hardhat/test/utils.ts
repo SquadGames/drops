@@ -16,7 +16,7 @@ export interface DropData {
   paymentSum: BigNumber
 }
 
-export async function fullDropData(testDrop: TestDrop, signers: Signer[]): Promise<DropData> {
+export async function fullDropData(testDrop: TestDrop, signers: (Signer | string)[]): Promise<DropData> {
   // check amounts total lte payments total
   const amountSum = testDrop.amounts.reduce(
     (total, a) => total = total.add(a), 
@@ -33,8 +33,14 @@ export async function fullDropData(testDrop: TestDrop, signers: Signer[]): Promi
   for(let i = 0; i < testDrop.amounts.length; i++) {
     const signer = signers[i]
     if (signer) {
+      let recipient: string
+      if (typeof signer === "string") {
+        recipient = signer
+      } else {
+        recipient = await signer.getAddress()
+      }
       const balance: Balance = {
-        recipient: await signer.getAddress(),
+        recipient,
         amount: BigNumber.from(testDrop.amounts[i])
       }
       balances.push(balance)
