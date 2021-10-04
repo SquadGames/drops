@@ -121,7 +121,7 @@ export function runTests(): void {
     clearStore()
   })
 
-  test("rejects NewClaim if remaining would go below zero?", () => {
+  test("rejects NewClaim if remaining would go below zero", () => {
     // create new drop
     let dropRoot = "0x89205A3A3b2A69De6Dbf7f01ED13B2108B2c43e7"
     let dropBlockString = "10"
