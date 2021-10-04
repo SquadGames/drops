@@ -1,0 +1,30 @@
+type Split @entity {
+  id: ID!
+  splitString: String!
+  payments: [Payment!]! @derivedFrom(field: "split")
+}
+
+type Payment @entity {
+  id: ID!
+  split: Split!
+  from: Bytes!
+  amount: BigInt!
+}
+
+type Drop @entity {
+  id: ID!
+  root: Bytes!
+  block: BigInt!
+  total: BigInt!
+  remaining: BigInt!
+  index: BigInt!
+  claims: [Claim!]! @derivedFrom(field: "drop")
+}
+
+type Claim @entity {
+  id: ID!
+  drop: Drop!
+  recipient: Bytes!
+  amount: BigInt!
+  wrapped: Boolean!
+}

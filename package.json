@@ -9,6 +9,20 @@
   "engines": {
     "node": "14.17.0"
   },
+  "scripts": {
+    "test-int-up": "yarn docker-up",
+    "test-int-down": "yarn docker-down && yarn docker-clean",
+
+    "docker-up": "docker-compose -f docker-compose.yaml up -d",
+    "docker-down": "docker-compose -f docker-compose.yaml down",
+    "docker-clean": "docker volume rm drops_postgres-volume",
+    "docker-logs": "docker-compose -f docker-compose.yaml logs",
+
+    "build": "yarn build-hardhat && yarn build-lib && yarn build-subgraph",
+    "build-hardhat": "yarn workspace @drops/hardhat build",
+    "build-lib": "yarn workspace @drops/lib build",
+    "build-subgraph": "yarn workspace @drops/subgraph build-all"
+  },
   "workspaces": [
     "calcDrop",
     "hardhat",

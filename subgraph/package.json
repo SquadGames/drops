@@ -1,0 +1,22 @@
+{
+  "name": "@drops/subgraph",
+  "version": "0.0.1",
+  "description": "Subgraph for drops",
+  "author": "Ezra Weller",
+  "license": "MIT",
+  "scripts": {
+    "codegen": "graph codegen",
+    "build": "graph build",
+    "build-all": "yarn codegen && yarn build",
+    "test": "graph test Drops",
+    "deploy": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ @drops/subgraph",
+    "create-local": "graph create --node http://localhost:8020/ @drops/subgraph",
+    "remove-local": "graph remove --node http://localhost:8020/ @drops/subgraph",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 @drops/subgraph"
+  },
+  "dependencies": {
+    "@graphprotocol/graph-cli": "^0.22.2",
+    "@graphprotocol/graph-ts": "^0.22.1",
+    "matchstick-as": "^0.1.3"
+  }
+}

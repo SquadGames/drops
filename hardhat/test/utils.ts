@@ -70,7 +70,7 @@ export async function checkedPay(
     from,
     { value: amount }
   ))
-    .to.emit(drops, "Payment")
+    .to.emit(drops, "NewPayment")
     .withArgs(
       split,
       from,
@@ -95,12 +95,12 @@ export async function checkedDrop(
     block.number,
     paymentSum
   ))
-    .to.emit(drops, "Drop")
+    .to.emit(drops, "NewDrop")
     .withArgs(
       getHexRoot(tree),
       block.number,
       paymentSum,
-      dropCount1.add(1)
+      dropCount1
     )
 
   const dropCount2 = await drops.dropCount()
@@ -117,7 +117,7 @@ export async function checkedDrop(
 export async function checkedClaim(
   provider: providers.BaseProvider,
   drops: Drops,
-  dropNumber: number,
+  dropIndex: number,
   balances: Balance[],
   balanceIndex: number,
   tree: MerkleTree
@@ -125,7 +125,7 @@ export async function checkedClaim(
   const balance = balances[balanceIndex]
   if (!balance) { throw new Error("no balance") }
   const claimed1 = await drops.isClaimed(
-    dropNumber,
+    dropIndex,
     balance.recipient
   )
   expect(claimed1).to.be.false
@@ -137,7 +137,7 @@ export async function checkedClaim(
   const proof = getHexProof(tree, toHexLeaf(balance))
 
   const txResponse = await drops.claim(
-    dropNumber,
+    dropIndex,
     balance.recipient,
     balance.amount,
     proof
@@ -151,13 +151,13 @@ export async function checkedClaim(
   if (!event) { throw new Error("no event") }
   const args = event.args
   if (!args) { throw new Error("no args") }
-  expect(args.dropNumber).to.eq(dropNumber, "event drop number")
+  expect(args.dropIndex).to.eq(dropIndex, "event drop number")
   expect(args.recipient).to.eq(balance.recipient, "event recipient")
   expect(args.amount).to.eq(balance.amount, "event amount")
   expect(args.wrapped).to.be.false
 
   const claimed2 = await drops.isClaimed(
-    dropNumber,
+    dropIndex,
     balance.recipient
   )
   expect(claimed2).to.be.true
@@ -204,18 +204,18 @@ export function recipientsAndAmounts(
 
 export async function checkClaimedArray(
   drops: Drops,
-  dropNumbers: number[], 
+  dropIndices: number[], 
   recipients: string[],
   expectation: boolean
 ) {
   const claimedArray: boolean[] = []
-  for(let i = 0; i < dropNumbers.length; i ++) {
-    const dropNumber = dropNumbers[i]
-    if (dropNumber === undefined) { throw new Error("no drop number") }
+  for(let i = 0; i < dropIndices.length; i ++) {
+    const dropIndex = dropIndices[i]
+    if (dropIndex === undefined) { throw new Error("no drop number") }
     const recipient = recipients[i]
     if (!recipient) { throw new Error("no recipient") }
     const result = await drops.isClaimed(
-      dropNumber,
+      dropIndex,
       recipient
     )
     expect(result).to.eq(expectation, "isClaimed")
@@ -258,7 +258,7 @@ export function getProofs(
 export async function checkedMultiClaim(
   provider: providers.BaseProvider,
   drops: Drops,
-  dropNumbers: number[],
+  dropIndices: number[],
   balancesArray: Balance[][],
   balanceIndices: number[],
   trees: MerkleTree[],
@@ -269,7 +269,7 @@ export async function checkedMultiClaim(
 
   await checkClaimedArray(
     drops,
-    dropNumbers,
+    dropIndices,
     recipients,
     false
   )
@@ -281,7 +281,7 @@ export async function checkedMultiClaim(
   const proofs = getProofs(trees, balances)
 
   const txResponse = await drops.multiClaim(
-    dropNumbers,
+    dropIndices,
     recipients,
     amounts,
     proofs
@@ -298,14 +298,14 @@ export async function checkedMultiClaim(
     if (!event) { throw new Error("no event") }
     const args = event.args
     if (!args) { throw new Error("no args") }
-    const dropNumber = dropNumbers[i]
-    if (dropNumber === undefined) { throw new Error("no drop number") }
+    const dropIndex = dropIndices[i]
+    if (dropIndex === undefined) { throw new Error("no drop number") }
     const recipient = recipients[i]
     if (!recipient) { throw new Error("no recipient") }
     const amount = amounts[i]
     if (!amount) { throw new Error("no amount") }
 
-    expect(args.dropNumber).to.eq(dropNumber, "event drop number")
+    expect(args.dropIndex).to.eq(dropIndex, "event drop number")
     expect(args.recipient).to.eq(recipient, "event recipient")
     expect(args.amount).to.eq(amount, "event amount")
     expect(args.wrapped).to.be.false
@@ -328,7 +328,7 @@ export async function checkedMultiClaim(
 
   await checkClaimedArray(
     drops,
-    dropNumbers,
+    dropIndices,
     recipients,
     true
   )

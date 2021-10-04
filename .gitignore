@@ -3,3 +3,4 @@ hardhat/artifacts
 hardhat/cache
 hardhat/typechain
 dist
+yarn-error.log

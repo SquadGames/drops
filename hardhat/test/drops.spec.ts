@@ -293,11 +293,11 @@ describe('Drops', () => {
         paymentSum
       )
       const balanceIndex=  0
-      const dropNumber = 1
+      const dropIndex = 1
       const balance = balances[balanceIndex]
       if (!balance) { throw new Error("no balance") }
       const claimed1 = await dropsSigner0.isClaimed(
-        dropNumber,
+        dropIndex,
         balance.recipient
       )
       expect(claimed1).to.be.false
@@ -305,7 +305,7 @@ describe('Drops', () => {
       const proof = getHexProof(tree, toHexLeaf(balance))
 
       await expect(dropsSigner0.claim(
-        dropNumber,
+        dropIndex,
         balance.recipient,
         balance.amount,
         proof
@@ -315,12 +315,12 @@ describe('Drops', () => {
     })
 
     it('reverts if drop does not exist', async () => {
-      const dropNumber = 1
+      const dropIndex = 1
       const balance = balances[0]
       if (balance) {
         const proof = getHexProof(tree, toHexLeaf(balance))
         await expect(dropsSigner0.claim(
-          dropNumber,
+          dropIndex,
           balance.recipient,
           balance.amount,
           proof
@@ -330,7 +330,7 @@ describe('Drops', () => {
     })
 
     it('reverts if recipient already claimed for this drop', async () => {
-      const dropNumber = 0
+      const dropIndex = 0
       const balanceIndex = 0
       await checkedClaim(
         provider,
@@ -345,7 +345,7 @@ describe('Drops', () => {
       if (balance) {
         const proof = getHexProof(tree, toHexLeaf(balance))
         await expect(dropsSigner0.claim(
-          dropNumber,
+          dropIndex,
           balance.recipient,
           balance.amount,
           proof
@@ -355,13 +355,13 @@ describe('Drops', () => {
     })
 
     it('reverts if proof is invalid', async () => {
-      const dropNumber = 0
+      const dropIndex = 0
       const balance = balances[0]
       const balance2 = balances[1]
       if (balance && balance2) {
         const proof = getHexProof(tree, toHexLeaf(balance2))
         await expect(dropsSigner0.claim(
-          dropNumber,
+          dropIndex,
           balance.recipient,
           balance.amount,
           proof
@@ -371,14 +371,14 @@ describe('Drops', () => {
     })
 
     it('allows resubmission after trying with an invalid proof', async () => {
-      const dropNumber = 0
+      const dropIndex = 0
       const balanceIndex = 0
       const balance = balances[balanceIndex]
       const balance2 = balances[1]
       if (balance && balance2) {
         const proof = getHexProof(tree, toHexLeaf(balance2))
         await expect(dropsSigner0.claim(
-          dropNumber,
+          dropIndex,
           balance.recipient,
           balance.amount,
           proof
@@ -389,7 +389,7 @@ describe('Drops', () => {
       await checkedClaim(
         provider,
         dropsSigner0,
-        dropNumber,
+        dropIndex,
         balances,
         balanceIndex,
         tree
@@ -461,13 +461,13 @@ describe('Drops', () => {
 
     it('reverts with wrong drop numbers', async () => {
       const balanceIndices = [0, 1]
-      const dropNumbers = [1, 1] // [0, 1] would be valid
+      const dropIndices = [1, 1] // [0, 1] would be valid
       const { recipients, amounts, balances } = 
         recipientsAndAmounts(balancesArray, balanceIndices)
 
       await checkClaimedArray(
         dropsSigner0,
-        dropNumbers,
+        dropIndices,
         recipients,
         false
       )
@@ -475,7 +475,7 @@ describe('Drops', () => {
       const proofs = getProofs(trees, balances)
 
       await expect(dropsSigner0.multiClaim(
-        dropNumbers,
+        dropIndices,
         recipients,
         amounts,
         proofs
@@ -485,14 +485,14 @@ describe('Drops', () => {
 
     it('reverts with wrong recipients', async () => {
       const balanceIndices = [0, 1]
-      const dropNumbers = [0, 1] 
+      const dropIndices = [0, 1] 
       const { recipients, amounts, balances } = 
         recipientsAndAmounts(balancesArray, balanceIndices)
       recipients[0] = ethers.Wallet.createRandom().address
 
       await checkClaimedArray(
         dropsSigner0,
-        dropNumbers,
+        dropIndices,
         recipients,
         false
       )
@@ -500,7 +500,7 @@ describe('Drops', () => {
       const proofs = getProofs(trees, balances)
 
       await expect(dropsSigner0.multiClaim(
-        dropNumbers,
+        dropIndices,
         recipients,
         amounts,
         proofs
@@ -510,14 +510,14 @@ describe('Drops', () => {
 
     it('reverts with wrong amounts', async () => {
       const balanceIndices = [0, 1]
-      const dropNumbers = [0, 1] 
+      const dropIndices = [0, 1] 
       const { recipients, amounts, balances } = 
         recipientsAndAmounts(balancesArray, balanceIndices)
       amounts[0] = BigNumber.from(1)
 
       await checkClaimedArray(
         dropsSigner0,
-        dropNumbers,
+        dropIndices,
         recipients,
         false
       )
@@ -525,7 +525,7 @@ describe('Drops', () => {
       const proofs = getProofs(trees, balances)
 
       await expect(dropsSigner0.multiClaim(
-        dropNumbers,
+        dropIndices,
         recipients,
         amounts,
         proofs
@@ -535,13 +535,13 @@ describe('Drops', () => {
 
     it('reverts with wrong proofs', async () => {
       const balanceIndices = [0, 1]
-      const dropNumbers = [0, 1] 
+      const dropIndices = [0, 1] 
       const { recipients, amounts, balances } = 
         recipientsAndAmounts(balancesArray, balanceIndices)
 
       await checkClaimedArray(
         dropsSigner0,
-        dropNumbers,
+        dropIndices,
         recipients,
         false
       )
@@ -553,7 +553,7 @@ describe('Drops', () => {
       ]
 
       await expect(dropsSigner0.multiClaim(
-        dropNumbers,
+        dropIndices,
         recipients,
         amounts,
         proofs
@@ -563,13 +563,13 @@ describe('Drops', () => {
 
     it('reverts if input arrays have different lengths', async () => {
       const balanceIndices = [0, 1]
-      const dropNumbers = [0, 1] 
+      const dropIndices = [0, 1] 
       const { recipients, amounts, balances } = 
         recipientsAndAmounts(balancesArray, balanceIndices)
 
       await checkClaimedArray(
         dropsSigner0,
-        dropNumbers,
+        dropIndices,
         recipients,
         false
       )
@@ -581,7 +581,7 @@ describe('Drops', () => {
       ])
 
       await expect(dropsSigner0.multiClaim(
-        dropNumbers,
+        dropIndices,
         recipients,
         amounts,
         proofs

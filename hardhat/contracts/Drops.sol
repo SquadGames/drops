@@ -39,17 +39,17 @@ contract Drops is Ownable {
 
   //======== Events ========
   
-  event Payment(string split, address from, uint256 amount);
+  event NewPayment(string split, address from, uint256 amount);
 
-  event Drop(
+  event NewDrop(
     bytes32 dropRoot, 
     uint256 dropBlock, 
     uint256 dropTotal,
-    uint256 dropCount
+    uint256 dropIndex
   );
 
-  event Claim(
-    uint256 dropNumber, 
+  event NewClaim(
+    uint256 dropIndex, 
     address recipient, 
     uint256 amount,
     bool wrapped
@@ -67,7 +67,7 @@ contract Drops is Ownable {
 
   function pay(string calldata split, address from) external payable {
     require(msg.value > 0, "Value was 0");
-    emit Payment(split, from, msg.value);
+    emit NewPayment(split, from, msg.value);
   }
 
   function drop(
@@ -83,24 +83,24 @@ contract Drops is Ownable {
     dropRoots.push(dropRoot);
     dropBlocks.push(dropBlock);
     unclaimedEth += dropAmount;
-    emit Drop(dropRoot, dropBlock, dropAmount, dropRoots.length);
+    emit NewDrop(dropRoot, dropBlock, dropAmount, dropRoots.length - 1);
   }
 
   function multiClaim(
-    uint256[] calldata dropNumbers,
+    uint256[] calldata dropIndices,
     address[] calldata recipients, 
     uint256[] calldata amounts, 
     bytes32[][] calldata proofs
   ) external {
     require(
       recipients.length == amounts.length &&
-      amounts.length == dropNumbers.length &&
-      dropNumbers.length == proofs.length,
+      amounts.length == dropIndices.length &&
+      dropIndices.length == proofs.length,
       "Input array lengths mismatched"
     );
     for (uint256 i = 0; i < recipients.length; i++) {
       claim(
-        dropNumbers[i],
+        dropIndices[i],
         recipients[i],
         amounts[i],
         proofs[i]
@@ -116,32 +116,32 @@ contract Drops is Ownable {
   //======== Public Functions ========
 
   function claim(
-    uint256 dropNumber,
+    uint256 dropIndex,
     address recipient, 
     uint256 amount,  
     bytes32[] calldata proof
   ) public {
-    require(dropRoots.length > dropNumber, "Drop doesn't exist");
-    require(!isClaimed(dropNumber, recipient), "Already claimed");
-    claimed[getClaimHash(dropNumber, recipient)] = true;
+    require(dropRoots.length > dropIndex, "Drop doesn't exist");
+    require(!isClaimed(dropIndex, recipient), "Already claimed");
+    claimed[getClaimHash(dropIndex, recipient)] = true;
     require(
       verifyProof(
         proof, 
-        dropRoots[dropNumber], 
+        dropRoots[dropIndex], 
         getLeaf(recipient, amount)
       ),
       "Invalid proof"
     );
     bool wrapped = transferETHOrWETH(recipient, amount);
     unclaimedEth -= amount;
-    emit Claim(dropNumber, recipient, amount, wrapped);
+    emit NewClaim(dropIndex, recipient, amount, wrapped);
   }
 
   function isClaimed(
-    uint256 dropNumber, 
+    uint256 dropIndex, 
     address recipient
   ) public view returns (bool) {
-    return claimed[getClaimHash(dropNumber, recipient)];
+    return claimed[getClaimHash(dropIndex, recipient)];
   }
 
 
@@ -174,10 +174,10 @@ contract Drops is Ownable {
   }
 
   function getClaimHash(
-    uint256 dropNumber, 
+    uint256 dropIndex, 
     address recipient
   ) private pure returns (bytes32) {
-    return keccak256(abi.encodePacked(dropNumber, recipient));
+    return keccak256(abi.encodePacked(dropIndex, recipient));
   }
 
   function getLeaf(
